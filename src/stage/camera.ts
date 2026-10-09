@@ -3,20 +3,61 @@ import { toRadians } from "../math_util";
 import { device, canvas, fovYDegrees, aspectRatio } from "../renderer";
 
 class CameraUniforms {
-    readonly buffer = new ArrayBuffer(16 * 4);
+    readonly buffer = new ArrayBuffer(16 * 4 * 3 + 8);
     private readonly floatView = new Float32Array(this.buffer);
 
     set viewProjMat(mat: Float32Array) {
-        // DONE-1.1: set the first 16 elements of `this.floatView` to the input `mat`
         this.floatView.set(mat.subarray(0, 16), 0);
     }
+    
+    // DONE-2: add extra functions to set values needed for light clustering here
+    set invProjMat(mat: Float32Array) {
+        this.floatView.set(mat.subarray(0, 16), 16);
+    }
 
-    // TODO-2: add extra functions to set values needed for light clustering here
+    set viewMat(mat: Float32Array) {
+        this.floatView.set(mat.subarray(0, 16), 32);
+    }
+
+    set far(far: number) {
+        this.floatView[16 * 3] = far;
+    }
+
+    set near(near: number) {
+        this.floatView[16 * 3 + 1] = near;
+    }
+
+}
+
+class ClusterData {
+
+    readonly buffer : ArrayBuffer;
+
+    constructor(resX: number, resY: number, resZ: number, numMaxLightPerCluster: number) {
+        
+        // 1 int (count), and actual light indices
+        const stride = Math.ceil((4 + 4 * numMaxLightPerCluster) / 16) * 16;
+        const numClusters = resX * resY * resZ;
+
+        this.buffer = new ArrayBuffer(16 + numClusters * stride);
+
+        // initialize the first 16 bytes (4 floats) to res
+        const intView = new Int32Array(this.buffer);
+        intView[0] = resX;
+        intView[1] = resY;
+        intView[2] = resZ;
+        intView[3] = numMaxLightPerCluster;
+        
+    }
+
 }
 
 export class Camera {
     uniforms: CameraUniforms = new CameraUniforms();
     uniformsBuffer: GPUBuffer;
+
+    clusterData: ClusterData = new ClusterData(32, 18, 24, 32);
+    clusterDataBuffer: GPUBuffer;
 
     projMat: Mat4 = mat4.create();
     cameraPos: Vec3 = vec3.create(-7, 2, 0);
@@ -43,6 +84,13 @@ export class Camera {
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
         this.uniformsBuffer = uniformBuffer;
+
+        const clusterDataBufferSize = this.clusterData.buffer.byteLength;
+        const clusterDataBuffer = device.createBuffer({
+            size: clusterDataBufferSize,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+        });
+        this.clusterDataBuffer = clusterDataBuffer;
 
         // note that you can add more variables (e.g. inverse proj matrix) to this buffer in later parts of the assignment
 
@@ -140,6 +188,10 @@ export class Camera {
         this.uniforms.viewProjMat = viewProjMat;
 
         // TODO-2: write to extra buffers needed for light clustering here
+        this.uniforms.invProjMat = mat4.invert(this.projMat);
+        this.uniforms.viewMat = viewMat;
+        this.uniforms.near = Camera.nearPlane;
+        this.uniforms.far = Camera.farPlane;
 
         // DONE-1.1: upload `this.uniforms.buffer` (host side) to `this.uniformsBuffer` (device side)
         // check `lights.ts` for examples of using `device.queue.writeBuffer()`
