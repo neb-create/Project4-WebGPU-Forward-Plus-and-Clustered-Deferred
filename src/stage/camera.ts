@@ -1,9 +1,10 @@
 import { Mat4, mat4, Vec3, vec3 } from "wgpu-matrix";
 import { toRadians } from "../math_util";
 import { device, canvas, fovYDegrees, aspectRatio } from "../renderer";
+import { constants } from "../shaders/shaders";
 
 class CameraUniforms {
-    readonly buffer = new ArrayBuffer(16 * 4 * 3 + 8);
+    readonly buffer = new ArrayBuffer(16 * 4 * 3 + 16);
     private readonly floatView = new Float32Array(this.buffer);
 
     set viewProjMat(mat: Float32Array) {
@@ -20,11 +21,11 @@ class CameraUniforms {
     }
 
     set far(far: number) {
-        this.floatView[16 * 3] = far;
+        this.floatView[16 * 3 + 1] = far;
     }
 
     set near(near: number) {
-        this.floatView[16 * 3 + 1] = near;
+        this.floatView[16 * 3] = near;
     }
 
 }
@@ -56,7 +57,11 @@ export class Camera {
     uniforms: CameraUniforms = new CameraUniforms();
     uniformsBuffer: GPUBuffer;
 
-    clusterData: ClusterData = new ClusterData(32, 18, 24, 32);
+    // define cluster dim.
+    clusterDim: Vec3 = vec3.create(constants.ClusterDimX, constants.ClusterDimY, constants.ClusterDimZ);
+    numMaxLightPerCluster: number = constants.maxNumLightPerCluster;
+
+    clusterData: ClusterData = new ClusterData(this.clusterDim[0], this.clusterDim[1], this.clusterDim[2], this.numMaxLightPerCluster);
     clusterDataBuffer: GPUBuffer;
 
     projMat: Mat4 = mat4.create();
@@ -91,6 +96,16 @@ export class Camera {
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         });
         this.clusterDataBuffer = clusterDataBuffer;
+        device.queue.writeBuffer(
+            this.clusterDataBuffer,
+            0,
+            new Uint32Array([
+                this.clusterDim[0],
+                this.clusterDim[1],
+                this.clusterDim[2],
+                this.numMaxLightPerCluster
+            ])
+        );
 
         // note that you can add more variables (e.g. inverse proj matrix) to this buffer in later parts of the assignment
 

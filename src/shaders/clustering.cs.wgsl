@@ -1,6 +1,6 @@
 // TODO-2: implement the light clustering compute shader
 
-@group(${bindGroup_scene}) @binding(1) var<storage, read_write> lightSet: LightSet;
+@group(${bindGroup_scene}) @binding(1) var<storage, read> lightSet: LightSet;
 @group(${bindGroup_scene}) @binding(2) var<storage, read_write> clusterData: ClusterData;
 
 @group(${bindGroup_scene}) @binding(0) var<uniform> camera: CameraUniforms;
@@ -80,7 +80,7 @@ fn main(@builtin(global_invocation_id) globalIdx: vec3u) {
 
     for (var i = 0u; i < numLights; i = i + 1u) {
         let light = lightSet.lights[i];
-        let lightPosView = (camera.viewMat * vec4f(light.position, 1.0)).xyz;
+        let lightPosView = (camera.viewMat * vec4f(light.pos, 1.0)).xyz;
         if (sphereIntersectsAABB(lightPosView, f32(${lightRadius}), bbmin, bbmax)) {
             if (numLightsHere < clusterData.maxNumLightPerCluster) {
                 clusterData.clusters[clusterIndex].lights[numLightsHere] = i;

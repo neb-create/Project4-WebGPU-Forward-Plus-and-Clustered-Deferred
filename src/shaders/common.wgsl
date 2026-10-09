@@ -13,9 +13,9 @@ struct LightSet {
 // DONE-2: you may want to create a ClusterSet struct similar to LightSet
 struct Cluster {
     numLights: u32,
-    lights: array<u32>
+    lights: array<u32, 256>
 }
-struct ClusterSet {
+struct ClusterData {
     dim: vec3u,
     maxNumLightPerCluster: u32,
     clusters: array<Cluster>
@@ -43,10 +43,10 @@ fn calculateLightContrib(light: Light, posWorld: vec3f, nor: vec3f) -> vec3f {
     return light.color * lambert * rangeAttenuation(distToLight);
 }
 
-fn getClusterIndex(posWorld: vec3f, dim: vec3u, viewProjMat: mat4x4f) -> u32 {
+fn getClusterIndex(posWorld: vec3f, dim: vec3u, camera: CameraUniforms) -> u32 {
 
     // X and Y index
-    let posClip = viewProjMat * vec4f(posWorld, 1.0);
+    let posClip = camera.viewProjMat * vec4f(posWorld, 1.0);
     let ndc = posClip.xyz / posClip.w;
 
     let u = ndc.x * 0.5 + 0.5;
@@ -55,7 +55,7 @@ fn getClusterIndex(posWorld: vec3f, dim: vec3u, viewProjMat: mat4x4f) -> u32 {
     let yIdx = u32(clamp(v * f32(dim.y), 0.0, f32(dim.y - 1u)));
 
     // Z index
-    let depth = posClip.w;
+    let depth = -(camera.viewMat * vec4f(posWorld, 1.0)).z;
     let sliceF = log(depth / camera.near) / log(camera.far / camera.near) * f32(dim.z);
     let zIdx = u32(clamp(sliceF, 0.0, f32(dim.z - 1u)));
 

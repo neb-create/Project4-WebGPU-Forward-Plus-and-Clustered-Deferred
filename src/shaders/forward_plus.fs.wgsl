@@ -30,6 +30,18 @@ struct FragmentInput
 // Multiply the fragment’s diffuse color by the accumulated light contribution.
 // Return the final color, ensuring that the alpha component is set appropriately (typically to 1).
 
+// testfunction
+fn debugToColor(index: u32, dim: vec3u) -> vec3f {
+    let x = index % dim.x;
+    let y = (index / dim.x) % dim.y;
+    let z = index / (dim.x * dim.y);
+
+    return vec3f(
+        f32(x) / f32(dim.x),
+        f32(y) / f32(dim.y),
+        f32(z) / f32(dim.z)
+    );
+}
 
 @fragment
 fn main(in: FragmentInput) -> @location(0) vec4f
@@ -42,17 +54,26 @@ fn main(in: FragmentInput) -> @location(0) vec4f
     var totalLightContrib = vec3f(0, 0, 0);
     
     // determine which cluster contains the current fragment
-    let clusterIndex = getClusterIndex(in.pos, clusterData.dim, camera.viewProjMat);
+    let clusterIndex = getClusterIndex(in.pos, clusterData.dim, camera);
     let nLights = clusterData.clusters[clusterIndex].numLights;
+
+    var test : f32 = 0.0;
 
     for (var lightIdx = 0u; lightIdx < nLights; lightIdx++) {
 
+        test += 0.05;
+
         // access light using index in cluster data
-        let light = lightSet.lights[clusterData.clusters[clusterIndex].lightIndices[lightIdx]];
+        let light = lightSet.lights[clusterData.clusters[clusterIndex].lights[lightIdx]];
 
         totalLightContrib += calculateLightContrib(light, in.pos, normalize(in.nor));
     }
 
     var finalColor = diffuseColor.rgb * totalLightContrib;
+    
+    //finalColor = debugToColor(clusterIndex, clusterData.dim);
+
+    //finalColor = vec3f(test, 0.0, 0.0);
+
     return vec4(finalColor, 1);
 }
