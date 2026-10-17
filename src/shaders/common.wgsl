@@ -13,7 +13,7 @@ struct LightSet {
 // DONE-2: you may want to create a ClusterSet struct similar to LightSet
 struct Cluster {
     numLights: u32,
-    lights: array<u32, 256>
+    lights: array<u32, 512>
 }
 struct ClusterData {
     dim: vec3u,

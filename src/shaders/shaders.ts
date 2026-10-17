@@ -28,6 +28,7 @@ export const constants = {
     bindGroup_scene: 0,
     bindGroup_model: 1,
     bindGroup_material: 2,
+    bindGroup_gbuffer: 1,
 
     moveLightsWorkgroupSize: 128,
 
@@ -36,7 +37,7 @@ export const constants = {
     ClusterDimX: 32,
     ClusterDimY: 18,
     ClusterDimZ: 24,
-    maxNumLightPerCluster: 256
+    maxNumLightPerCluster: 512
     
 };
 
