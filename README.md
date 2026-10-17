@@ -9,12 +9,12 @@ WebGL Forward+ and Clustered Deferred Shading
   
 ### Live Demo
 
-<a href="https://neb-create.github.io/Project4-WebGPU-Forward-Plus-and-Clustered-Deferred">
-  <img src="img/thumb.png" width="480" alt="Project demo">
-</a>
+[![](img/thumb.png)](http://neb-create.github.io/Project4-WebGPU-Forward-Plus-and-Clustered-Deferred)
 
 ### Demo Video/GIF
 
+!! High quality video available inside of <img/demo.mp4>
+https://github.com/user-attachments/assets/f1057d2e-e0fd-4a7c-90d4-5be6be3db110
 
 ## Overview
 
